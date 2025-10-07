@@ -1,0 +1,15 @@
+Z:\Dev\myboop\MiniBoop\obj\Debug\net4.0-windows\MiniBoop.csproj.AssemblyReference.cache
+Z:\Dev\myboop\MiniBoop\obj\Debug\net4.0-windows\MiniBoop.GeneratedMSBuildEditorConfig.editorconfig
+Z:\Dev\myboop\MiniBoop\obj\Debug\net4.0-windows\MiniBoop.AssemblyInfoInputs.cache
+Z:\Dev\myboop\MiniBoop\obj\Debug\net4.0-windows\MiniBoop.AssemblyInfo.cs
+Z:\Dev\myboop\MiniBoop\obj\Debug\net4.0-windows\MiniBoop.csproj.CoreCompileInputs.cache
+Z:\Dev\myboop\MiniBoop\bin\Debug\net4.0-windows\MiniBoop.exe.config
+Z:\Dev\myboop\MiniBoop\bin\Debug\net4.0-windows\MiniBoop.exe
+Z:\Dev\myboop\MiniBoop\bin\Debug\net4.0-windows\MiniBoop.pdb
+Z:\Dev\myboop\MiniBoop\bin\Debug\net4.0-windows\Newtonsoft.Json.dll
+Z:\Dev\myboop\MiniBoop\bin\Debug\net4.0-windows\ScintillaNET.dll
+Z:\Dev\myboop\MiniBoop\bin\Debug\net4.0-windows\ScintillaNET.xml
+Z:\Dev\myboop\MiniBoop\obj\Debug\net4.0-windows\MiniBoop.csproj.Up2Date
+Z:\Dev\myboop\MiniBoop\obj\Debug\net4.0-windows\MiniBoop.exe
+Z:\Dev\myboop\MiniBoop\obj\Debug\net4.0-windows\MiniBoop.pdb
+Z:\Dev\myboop\MiniBoop\obj\Debug\net4.0-windows\MiniBoop.exe.config

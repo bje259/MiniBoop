@@ -1,0 +1,66 @@
+{
+  "format": 1,
+  "restore": {
+    "Z:\\Dev\\myboop\\MiniBoop\\MiniBoop.csproj": {}
+  },
+  "projects": {
+    "Z:\\Dev\\myboop\\MiniBoop\\MiniBoop.csproj": {
+      "version": "1.0.0",
+      "restore": {
+        "projectUniqueName": "Z:\\Dev\\myboop\\MiniBoop\\MiniBoop.csproj",
+        "projectName": "MiniBoop",
+        "projectPath": "Z:\\Dev\\myboop\\MiniBoop\\MiniBoop.csproj",
+        "packagesPath": "C:\\Users\\bradleyeuell\\.nuget\\packages\\",
+        "outputPath": "Z:\\Dev\\myboop\\MiniBoop\\obj\\",
+        "projectStyle": "PackageReference",
+        "configFilePaths": [
+          "C:\\Users\\bradleyeuell\\AppData\\Roaming\\NuGet\\NuGet.Config"
+        ],
+        "originalTargetFrameworks": [
+          "net481"
+        ],
+        "sources": {
+          "https://api.nuget.org/v3/index.json": {}
+        },
+        "frameworks": {
+          "net481": {
+            "targetAlias": "net481",
+            "projectReferences": {}
+          }
+        },
+        "warningProperties": {
+          "warnAsError": [
+            "NU1605"
+          ]
+        },
+        "restoreAuditProperties": {
+          "enableAudit": "true",
+          "auditLevel": "low",
+          "auditMode": "direct"
+        },
+        "SdkAnalysisLevel": "9.0.300"
+      },
+      "frameworks": {
+        "net481": {
+          "targetAlias": "net481",
+          "dependencies": {
+            "Jint": {
+              "target": "Package",
+              "version": "[4.4.1, )"
+            },
+            "Newtonsoft.Json": {
+              "target": "Package",
+              "version": "[13.0.4, )"
+            }
+          },
+          "runtimeIdentifierGraphPath": "C:\\Program Files\\dotnet\\sdk\\9.0.305\\RuntimeIdentifierGraph.json"
+        }
+      },
+      "runtimes": {
+        "win-x86": {
+          "#import": []
+        }
+      }
+    }
+  }
+}

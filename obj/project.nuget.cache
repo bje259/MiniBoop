@@ -1,0 +1,16 @@
+{
+  "version": 2,
+  "dgSpecHash": "58soSQEhxeA=",
+  "success": true,
+  "projectFilePath": "Z:\\Dev\\myboop\\MiniBoop\\MiniBoop.csproj",
+  "expectedPackageFiles": [
+    "C:\\Users\\bradleyeuell\\.nuget\\packages\\acornima\\1.2.0\\acornima.1.2.0.nupkg.sha512",
+    "C:\\Users\\bradleyeuell\\.nuget\\packages\\jint\\4.4.1\\jint.4.4.1.nupkg.sha512",
+    "C:\\Users\\bradleyeuell\\.nuget\\packages\\newtonsoft.json\\13.0.4\\newtonsoft.json.13.0.4.nupkg.sha512",
+    "C:\\Users\\bradleyeuell\\.nuget\\packages\\system.buffers\\4.5.1\\system.buffers.4.5.1.nupkg.sha512",
+    "C:\\Users\\bradleyeuell\\.nuget\\packages\\system.memory\\4.5.5\\system.memory.4.5.5.nupkg.sha512",
+    "C:\\Users\\bradleyeuell\\.nuget\\packages\\system.numerics.vectors\\4.5.0\\system.numerics.vectors.4.5.0.nupkg.sha512",
+    "C:\\Users\\bradleyeuell\\.nuget\\packages\\system.runtime.compilerservices.unsafe\\6.0.0\\system.runtime.compilerservices.unsafe.6.0.0.nupkg.sha512"
+  ],
+  "logs": []
+}

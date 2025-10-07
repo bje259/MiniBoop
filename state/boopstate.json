@@ -1,0 +1,10 @@
+{
+  "EditorText": "s/Goodnight/Hello/g\r\ns/Hello/hello/g\r\ns/World/world/g\r\ns/o\\s*w/o\\nw/g\r\n\r\n\r\ns/hello/Hello/g\r\ns/world/World/g\r\ns/Hello/Goodnight/g\r\ns/(?<=\\S)World/ World/g\r\nhelloworld\r\nHelloWorld\r\nhello world",
+  "SelectionStart": 0,
+  "SelectionLength": 0,
+  "ScrollPosition": 0,
+  "WindowWidth": 1132,
+  "WindowHeight": 589,
+  "WindowLeft": 85,
+  "WindowTop": 112
+}

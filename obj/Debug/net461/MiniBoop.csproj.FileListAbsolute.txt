@@ -1,0 +1,14 @@
+Z:\Dev\myboop\MiniBoop\bin\Debug\net461\MiniBoop.exe.config
+Z:\Dev\myboop\MiniBoop\bin\Debug\net461\MiniBoop.exe
+Z:\Dev\myboop\MiniBoop\bin\Debug\net461\MiniBoop.pdb
+Z:\Dev\myboop\MiniBoop\bin\Debug\net461\Newtonsoft.Json.dll
+Z:\Dev\myboop\MiniBoop\bin\Debug\net461\ScintillaNET.dll
+Z:\Dev\myboop\MiniBoop\bin\Debug\net461\ScintillaNET.xml
+Z:\Dev\myboop\MiniBoop\obj\Debug\net461\MiniBoop.csproj.AssemblyReference.cache
+Z:\Dev\myboop\MiniBoop\obj\Debug\net461\MiniBoop.GeneratedMSBuildEditorConfig.editorconfig
+Z:\Dev\myboop\MiniBoop\obj\Debug\net461\MiniBoop.AssemblyInfoInputs.cache
+Z:\Dev\myboop\MiniBoop\obj\Debug\net461\MiniBoop.AssemblyInfo.cs
+Z:\Dev\myboop\MiniBoop\obj\Debug\net461\MiniBoop.csproj.CoreCompileInputs.cache
+Z:\Dev\myboop\MiniBoop\obj\Debug\net461\MiniBoop.csproj.Up2Date
+Z:\Dev\myboop\MiniBoop\obj\Debug\net461\MiniBoop.exe
+Z:\Dev\myboop\MiniBoop\obj\Debug\net461\MiniBoop.pdb

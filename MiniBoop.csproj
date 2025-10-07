@@ -1,0 +1,17 @@
+﻿<Project Sdk="Microsoft.NET.Sdk.WindowsDesktop">
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <TargetFramework>net481</TargetFramework> <!-- or net8.0-windows -->
+    <UseWindowsForms>true</UseWindowsForms>
+  </PropertyGroup>
+  <ItemGroup>
+  <Reference Include="ScintillaNET">
+    <HintPath>lib\\ScintillaNET.dll</HintPath>
+    <Private>true</Private>
+  </Reference>
+</ItemGroup>
+  <ItemGroup>
+    <PackageReference Include="Jint" Version="4.4.1" />
+    <PackageReference Include="Newtonsoft.Json" Version="13.0.4" />
+  </ItemGroup>
+</Project>
