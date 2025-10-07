@@ -7,6 +7,7 @@ using System.IO;
 using System.Collections.Generic;
 using System.Text.RegularExpressions;
 
+
 namespace MiniBoop
 {
     static class Program
@@ -24,13 +25,14 @@ namespace MiniBoop
         public static bool Debug = false;
         public static string Dump(object obj) =>
             obj == null ? "null" : JsonConvert.SerializeObject(obj, Formatting.Indented);
-        public static string DumpPrint(object obj,string prefix = "")
+        public static string DumpPrint(object obj, string prefix = "")
         {
             var json = Dump(obj);
             Console.WriteLine($"{prefix}{json}");
             return json;
         }
     }
+
     public class BoopState
     {
         public string EditorText { get; set; }
@@ -43,9 +45,9 @@ namespace MiniBoop
         public int WindowTop { get; set; }
         public bool WindowWasMaximized { get; set; }
     }
-    
-    
-    
+
+
+
     public class MainForm : Form
     {
         private Scintilla editor;
@@ -80,19 +82,19 @@ namespace MiniBoop
         }
 
         public MainForm()
-            {
-                this.Text = "Mini Boop";
-                this.Size = new Size(600, 400);
+        {
+            this.Text = "Mini Boop";
+            this.Size = new Size(600, 400);
 
-                InitializeEditor2();
-                InitializeMenu();
+            InitializeEditor2();
+            InitializeMenu();
 
-                this.Controls.Add(editor);
-                this.Controls.Add(menuStrip);
-                this.MainMenuStrip = menuStrip;
-                this.Load += (s, e) => LoadState();
-                this.FormClosing += (s, e) => SaveState();
-            }
+            this.Controls.Add(editor);
+            this.Controls.Add(menuStrip);
+            this.MainMenuStrip = menuStrip;
+            this.Load += (s, e) => LoadState();
+            this.FormClosing += (s, e) => SaveState();
+        }
 
         private void InitializeEditor()
         {
@@ -149,7 +151,7 @@ namespace MiniBoop
                     }
                 }
             }
-            
+
             var scintilla_TextChanged = new System.EventHandler((sender, e) =>
             {
                 ApplyHighlighting(editor.Text);
@@ -240,7 +242,7 @@ namespace MiniBoop
                 : this.RestoreBounds;
             var state = new BoopState
             {
-                EditorText = editor.Text,
+                EditorText = CryptoHelper.Encrypt(editor.Text),
                 SelectionStart = editor.SelectionStart,
                 SelectionLength = editor.SelectionEnd - editor.SelectionStart,
                 WindowWidth = restore.Width,
@@ -275,7 +277,7 @@ namespace MiniBoop
             var json = File.ReadAllText(path);
             var state = JsonConvert.DeserializeObject<BoopState>(json);
 
-            editor.Text = state.EditorText;
+            editor.Text = CryptoHelper.Decrypt(state.EditorText);
             editor.SelectionStart = state.SelectionStart;
             editor.SelectionEnd = state.SelectionStart + state.SelectionLength;
             this.Width = state.WindowWidth;

@@ -9,6 +9,7 @@
     <HintPath>lib\\ScintillaNET.dll</HintPath>
     <Private>true</Private>
   </Reference>
+  <Reference Include="System.Security" />
 </ItemGroup>
   <ItemGroup>
     <PackageReference Include="Jint" Version="4.4.1" />
