@@ -1,0 +1,12 @@
+Z:\Dev\myboop\MiniBoop\bin\Debug\net481\publish\MiniBoop.exe
+Z:\Dev\myboop\MiniBoop\bin\Debug\net481\publish\MiniBoop.exe.config
+Z:\Dev\myboop\MiniBoop\bin\Debug\net481\publish\MiniBoop.pdb
+Z:\Dev\myboop\MiniBoop\bin\Debug\net481\publish\Acornima.dll
+Z:\Dev\myboop\MiniBoop\bin\Debug\net481\publish\Jint.dll
+Z:\Dev\myboop\MiniBoop\bin\Debug\net481\publish\Newtonsoft.Json.dll
+Z:\Dev\myboop\MiniBoop\bin\Debug\net481\publish\System.Buffers.dll
+Z:\Dev\myboop\MiniBoop\bin\Debug\net481\publish\System.Memory.dll
+Z:\Dev\myboop\MiniBoop\bin\Debug\net481\publish\System.Numerics.Vectors.dll
+Z:\Dev\myboop\MiniBoop\bin\Debug\net481\publish\System.Runtime.CompilerServices.Unsafe.dll
+Z:\Dev\myboop\MiniBoop\bin\Debug\net481\publish\ScintillaNET.dll
+Z:\Dev\myboop\MiniBoop\bin\Debug\net481\publish\ScintillaNET.xml
