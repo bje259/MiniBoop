@@ -116,6 +116,7 @@ public class BoopScript
 
         // Extract metadata
         var metaMatch = Regex.Match(raw, @"/\*\*([\s\S]*?)\*/", RegexOptions.Multiline);
+        // var tmp = Regex.Replace
         if (!metaMatch.Success)
             throw new Exception("Boop metadata block not found.");
 
