@@ -17,7 +17,8 @@ Z:\Dev\myboop\MiniBoop\obj\Debug\net481\MiniBoop.GeneratedMSBuildEditorConfig.ed
 Z:\Dev\myboop\MiniBoop\obj\Debug\net481\MiniBoop.AssemblyInfoInputs.cache
 Z:\Dev\myboop\MiniBoop\obj\Debug\net481\MiniBoop.AssemblyInfo.cs
 Z:\Dev\myboop\MiniBoop\obj\Debug\net481\MiniBoop.csproj.CoreCompileInputs.cache
+Z:\Dev\myboop\MiniBoop\obj\Debug\net481\MiniBoop.sourcelink.json
 Z:\Dev\myboop\MiniBoop\obj\Debug\net481\MiniBoop.csproj.Up2Date
 Z:\Dev\myboop\MiniBoop\obj\Debug\net481\MiniBoop.exe
 Z:\Dev\myboop\MiniBoop\obj\Debug\net481\MiniBoop.pdb
-Z:\Dev\myboop\MiniBoop\obj\Debug\net481\MiniBoop.sourcelink.json
+Z:\Dev\myboop\MiniBoop\bin\Debug\net481\System.Management.Automation.dll

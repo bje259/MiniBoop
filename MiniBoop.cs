@@ -8,6 +8,13 @@ using System.Collections.Generic;
 using System.Text.RegularExpressions;
 using System.Drawing.Imaging;
 using System.Data;
+using System.Runtime.CompilerServices;
+using Acornima.Ast;
+using System.ComponentModel;
+using System.Management.Automation;
+using System.Collections.ObjectModel;
+using System.Linq;
+using System.Management.Automation.Runspaces;
 
 
 namespace MiniBoop
@@ -60,9 +67,10 @@ namespace MiniBoop
         public bool WindowWasMaximized { get; set; }
         public int FontSize { get; set; }
         public int ZoomLevel { get; set; }
+        public bool? ShowInvisibles { get; set; }
     }
 
-
+    
 
     public class MainForm : Form
     {
@@ -72,6 +80,11 @@ namespace MiniBoop
         private ToolStrip toolStrip;
         private int fontSize;
         private int zoomLevel;
+        private Panel findPanel;
+        private TextBox findBox;
+        private Button nextBtn;
+        private Runspace sharedRunspace;
+        private bool showInvisibles;
 
         public class BoopStyle
         {
@@ -104,9 +117,11 @@ namespace MiniBoop
             this.Size = new Size(600, 400);
             this.fontSize = 10;
             
+            InitializeFindUI();
             InitializeEditor2();
             InitializeMenu();
             InitializeContextMenu();
+            InitSearchIndicator();
 
             this.Controls.Add(editor);
             this.Controls.Add(toolStrip);
@@ -200,6 +215,15 @@ namespace MiniBoop
             editor.Styles[BoopStyle.Attribute].ForeColor = Color.Teal;
             editor.Styles[BoopStyle.Extra].ForeColor = Color.DarkRed;
 
+            nextBtn.BackColor = marginBg;
+            nextBtn.ForeColor = fg;
+
+            findPanel.BackColor = marginBg;
+            findPanel.ForeColor = fg;
+
+            findBox.BackColor = bg;
+            findBox.ForeColor = fg;
+
 
             //folding
 
@@ -258,6 +282,16 @@ namespace MiniBoop
             editor.Styles[BoopStyle.Number].ForeColor = Color.Purple;
             editor.Styles[BoopStyle.Attribute].ForeColor = Color.Teal;
             editor.Styles[BoopStyle.Extra].ForeColor = Color.DarkRed;
+
+            nextBtn.BackColor = marginBg;
+            nextBtn.ForeColor = fg;
+
+            findPanel.BackColor = marginBg;
+            findPanel.ForeColor = fg;
+
+            findBox.BackColor = bg;
+            findBox.ForeColor = fg;
+
 
             //folding
             for (int i = 25; i <= 31; i++)
@@ -350,6 +384,8 @@ namespace MiniBoop
                 };
             editor.Styles[Style.Default].Font = "MesloLGS Nerd Font Mono";
             editor.Styles[Style.Default].Size = this.fontSize == 0 ? 10 : this.fontSize;
+            editor.ViewWhitespace = this.showInvisibles ? WhitespaceMode.VisibleAlways : WhitespaceMode.Invisible;
+            editor.ViewEol = this.showInvisibles ? true : false;
             editor.Zoom = this.zoomLevel == 0 ? -2 : this.zoomLevel; // default zoom level
             editor.StartStyling(0);
             editor.SetStyling(editor.Text.Length, BoopStyle.Default); // Clear
@@ -381,6 +417,16 @@ namespace MiniBoop
             editor.SetKeywords(0, "int string void if else return class using namespace public static");
 
             // configureFolding();
+            sharedRunspace = RunspaceFactory.CreateRunspace();
+            sharedRunspace.Open();
+            using (var ps = PowerShell.Create())
+            {
+                ps.Runspace = sharedRunspace;
+                ps.AddScript(". C:\\Mac\\Home\\Documents\\PowerShell\\miniprofilebom.ps1");
+                ps.Invoke();
+            }
+
+
 
         }
 
@@ -412,36 +458,162 @@ namespace MiniBoop
                     MessageBox.Show("Invalid JSON", "Error");
                 }
             };
-
-            string exeDir = AppContext.BaseDirectory;
-            // Console.WriteLine("Exe dir: " + exeDir);
-            foreach (var path in Directory.GetFiles(Path.Combine(exeDir, "Scripts"), "*.js"))
+            var runPSSourceItem = new ToolStripMenuItem("Run PowerShell Script");
+            runPSSourceItem.Click += (s, e) =>
             {
-                var script = BoopScript.LoadFromFile(path);
-
-                var item = new ToolStripMenuItem(script.Name);
-                item.ToolTipText = script.Description;
-                item.Click += (s, e) =>
+                try
                 {
-                    try
+                    using (PowerShell ps = PowerShell.Create())
                     {
-                        var result = script.Apply(editor.Text, editor.SelectedText, (msg) => MessageBox.Show(msg, "Boop Script Error"));
-                        if (result.selection != "")
-                            editor.ReplaceSelection(result.selection);
+                        var isSelection = editor.SelectedText.Length > 0;
+                        var text = isSelection ? editor.SelectedText : editor.Text;
+                        ps.Runspace = sharedRunspace;
+                        ps.AddScript(text);
+                        var results = ps.Invoke();
+                        if (ps.HadErrors)
+                        {
+                            var errors = ps.Streams.Error.ReadAll();
+                            var errorStrings = string.Join("\n", errors.Select(err => err.ToString()));
+                            MessageBox.Show("PowerShell Script Error:\n" + errorStrings, "Error");
+                            if (isSelection)
+                            {
+                                editor.ReplaceSelection(text+"\n\n# Errors:\n"+errorStrings);
+                            }
+                            else
+                            {
+                                editor.Text = text+"\n\n# Errors:\n"+errorStrings;
+                            }
+                        }
                         else
-                            editor.Text = result.fullText;
+                        {
+                            string output = string.Join("\n", results.Select(r => r.ToString()));
+                            if (isSelection)
+                            {
+                                editor.ReplaceSelection(output);
+                            }
+                            else
+                            {
+                                editor.Text = output;
+                            }
+                        }
                     }
-                    catch (Exception ex)
+                }
+                catch (Exception ex)
+                {
+                    MessageBox.Show("Script failed: " + ex.Message, "Error");
+                }
+            };
+            var runPYSourceItem = new ToolStripMenuItem("Run Python Script");
+            runPYSourceItem.Click += (s, e) =>
+            {
+                try
+                {
+                    using (PowerShell ps = PowerShell.Create())
                     {
-                        MessageBox.Show("Script failed: " + ex.Message, "Error");
+                        var isSelection = editor.SelectedText.Length > 0;
+                        var text = isSelection ? editor.SelectedText : editor.Text;
+                        ps.Runspace = sharedRunspace;
+                        string InvokePythonFunc = """
+                        function New-TempFileWithExtension([string]$ext) {
+                            $tmp = [System.IO.Path]::GetTempFileName()
+                            Rename-Item $tmp ($renamed=[System.IO.Path]::ChangeExtension($tmp,$ext))
+                            $tmp = $renamed
+                            return $tmp
+                        }
+                        function Invoke-Python {
+                            $src = $args[0] -join "`n"
+                            $tmp = New-TempFileWithExtension(".py")
+                            $newargs = ($tmp,($args[2..$args.Count]).GetEnumerator() | % { $_ })
+                            $enc = [System.Text.UTF8Encoding]::new($false)
+                            [System.IO.File]::WriteAllText($tmp,$src,$enc)
+                            python $newargs
+                        }
+                        """ + $"""
+                        $pysrc = @'
+                        {text}
+                        '@;
+                        """ + """
+                        Invoke-Python $pysrc;
+                        """;
+                        ps.AddScript(InvokePythonFunc);
+                        var results = ps.Invoke();
+                        if (ps.HadErrors)
+                        {
+                            var errors = ps.Streams.Error.ReadAll();
+                            var errorStrings = string.Join("\n", errors.Select(err => err.ToString()));
+                            MessageBox.Show("Python Script Error:\n" + errorStrings, "Error");
+                            if (isSelection)
+                            {
+                                editor.ReplaceSelection(text+"\n\n# Errors:\n"+errorStrings);
+                            }
+                            else
+                            {
+                                editor.Text = text+"\n\n# Errors:\n"+errorStrings;
+                            }
+                        }
+                        else
+                        {
+                            string output = string.Join("\n", results.Select(r => r.ToString()));
+                            if (isSelection)
+                            {
+                                editor.ReplaceSelection(output);
+                            }
+                            else
+                            {
+                                editor.Text = output;
+                            }
+                        }
                     }
-                };
+                }
+                catch (Exception ex)
+                {
+                    MessageBox.Show("Script failed: " + ex.Message, "Error");
+                }
+            };
+            var reloadItems = new ToolStripMenuItem("Reload");
+            Action loadTransformMenuItems = () =>
+            {
+                string exeDir = AppContext.BaseDirectory;
+                // Console.WriteLine("Exe dir: " + exeDir);
+                foreach (var path in Directory.GetFiles(Path.Combine(exeDir, "Scripts"), "*.js"))
+                {
+                    var script = BoopScript.LoadFromFile(path);
 
-                transformMenu.DropDownItems.Add(item);
-            }
+                    var item = new ToolStripMenuItem(script.Name);
+                    item.ToolTipText = script.Description;
+                    item.Click += (s, e) =>
+                    {
+                        try
+                        {
+                            var result = script.Apply(editor.Text, editor.SelectedText, (msg) => MessageBox.Show(msg, "Boop Script Error"));
+                            if (result.selection != "")
+                                editor.ReplaceSelection(result.selection);
+                            else
+                                editor.Text = result.fullText;
+                        }
+                        catch (Exception ex)
+                        {
+                            MessageBox.Show("Script failed: " + ex.Message, "Error");
+                        }
+                    };
 
-            transformMenu.DropDownItems.Add(uppercaseItem);
-            transformMenu.DropDownItems.Add(jsonPrettyItem);
+                        transformMenu.DropDownItems.Add(item);
+                }
+
+                transformMenu.DropDownItems.Add(uppercaseItem);
+                transformMenu.DropDownItems.Add(jsonPrettyItem);
+                transformMenu.DropDownItems.Add(runPSSourceItem);
+                transformMenu.DropDownItems.Add(runPYSourceItem);
+                transformMenu.DropDownItems.Add(reloadItems);
+            };
+
+            reloadItems.Click += (s, e) =>
+            {
+                transformMenu.DropDownItems.Clear();
+                loadTransformMenuItems();
+            };
+            
+            loadTransformMenuItems();
 
             // menuStrip.Items.Add(transformMenu);
             // menuStrip.Items.Add(viewMenu);
@@ -546,6 +718,17 @@ namespace MiniBoop
             };
             menu.Items.Add(wordWrapItem);
 
+            ToolStripMenuItem showInvisiblesItem = new ToolStripMenuItem("Show Invisibles");
+            showInvisiblesItem.Checked = this.showInvisibles;
+            showInvisiblesItem.Click += (s, ev) =>
+            {
+                this.showInvisibles = !this.showInvisibles;
+                editor.ViewWhitespace = this.showInvisibles ? WhitespaceMode.VisibleAlways : WhitespaceMode.Invisible;
+                editor.ViewEol = this.showInvisibles ? true : false;
+                showInvisiblesItem.Checked = this.showInvisibles;
+            };
+            menu.Items.Add(showInvisiblesItem);
+
             // Always on Top toggle
             ToolStripMenuItem alwaysOnTopItem = new ToolStripMenuItem("Always on Top");
             alwaysOnTopItem.Checked = this.TopMost;
@@ -588,7 +771,163 @@ namespace MiniBoop
             InitializeEditor2(true); // Reapply theme to update font color
         }
 
+        private int lastFindPos = 0;
 
+        public void FindNext(string needle)
+        {
+            if (string.IsNullOrEmpty(needle))
+                return;
+
+            var docLen = editor.TextLength;
+
+            // start searching from after previous match
+            editor.TargetStart = lastFindPos;
+            editor.TargetEnd   = docLen;
+            editor.SearchFlags = SearchFlags.None;   // or MatchCase / WholeWord / Regex
+
+            int pos = editor.SearchInTarget(needle);
+
+            // If not found, wrap around
+            if (pos == -1)
+            {
+                editor.TargetStart = 0;
+                editor.TargetEnd   = docLen;
+                pos = editor.SearchInTarget(needle);
+            }
+
+            if (pos != -1)
+            {
+                lastFindPos = editor.TargetEnd;  // next search continues after this match
+                editor.SetSelection(editor.TargetStart, editor.TargetEnd);
+                editor.ScrollCaret();
+            }
+        }
+
+
+        public void InitializeFindUI()
+        {
+            findPanel = new Panel();
+            findPanel.Dock = DockStyle.Top;
+            findPanel.Height = 32;
+            findPanel.BorderStyle = BorderStyle.FixedSingle;
+
+            findBox = new TextBox();
+            findBox.Multiline = true;
+            findBox.AcceptsReturn = false;
+            findBox.AcceptsTab = false;
+            findBox.BorderStyle = BorderStyle.FixedSingle;
+            findBox.AutoSize = false;
+            findBox.Dock = DockStyle.Fill;
+            findBox.Height = 32;
+            findBox.Font = new Font("MesloLGS Nerd Font Mono", 12);
+
+            findBox.KeyDown += (s, e) =>
+            {
+                if (e.KeyCode == Keys.Enter)
+                {
+                    e.SuppressKeyPress = true; // stops newline
+                    e.Handled = true;          // prevent further processing
+                    nextBtn.PerformClick();    // trigger Find Next
+                }
+            };
+
+            
+            nextBtn = new Button();
+            nextBtn.Height = 32;
+            nextBtn.Text = "Next";
+            nextBtn.Dock = DockStyle.Right;
+            nextBtn.FlatStyle = FlatStyle.Flat;
+
+            nextBtn.Click += (s,e) => FindNext(findBox.Text);
+
+            
+
+            findPanel.Controls.Add(findBox);
+            findPanel.Controls.Add(nextBtn);
+            findPanel.Visible = false;
+
+            this.Controls.Add(findPanel);
+
+            findBox.TextChanged += (s, e) => HighlightAll(findBox.Text);
+
+        }
+
+        // void ShowFindDialog()
+        // {
+        //     findPanel.Visible = true;
+        //     findBox.Focus();
+        //     findBox.SelectAll();
+        // }
+        private string lastSearch = "";
+
+        void ToggleFindDialog()
+        {
+            findPanel.Visible = !findPanel.Visible;
+            if (findPanel.Visible)
+            {
+                findBox.Text = lastSearch;
+                findBox.Focus();
+                findBox.SelectAll();
+                HighlightAll(lastSearch);
+            }
+            else
+            {
+                lastSearch = findBox.Text;
+                findBox.Clear();
+                HighlightAll(""); // remove highlights
+                editor.Focus();
+            }
+        }
+
+
+        protected override bool ProcessCmdKey(ref Message msg, Keys keyData)
+        {
+            if (keyData == (Keys.Control | Keys.F))
+            {
+                ToggleFindDialog();
+                return true;
+            }
+            return base.ProcessCmdKey(ref msg, keyData);
+        }
+        private const int INDIC_SEARCH = 8;
+
+        private void InitSearchIndicator()
+        {
+            var ind = editor.Indicators[INDIC_SEARCH];
+            ind.Style = IndicatorStyle.StraightBox;
+            ind.ForeColor = Color.FromArgb(120, 180, 255);
+            ind.Alpha = 100;
+            ind.OutlineAlpha = 200;
+        }
+
+        public void HighlightAll(string needle)
+        {
+            editor.IndicatorCurrent = INDIC_SEARCH;
+            editor.IndicatorClearRange(0, editor.TextLength);
+
+            if (string.IsNullOrEmpty(needle))
+                return;
+
+            editor.SearchFlags = SearchFlags.None;
+
+            int start = 0;
+            editor.TargetStart = start;
+            editor.TargetEnd = editor.TextLength;
+
+            while (true)
+            {
+                int pos = editor.SearchInTarget(needle);
+                if (pos == -1) break;
+
+                editor.IndicatorFillRange(editor.TargetStart, editor.TargetEnd - editor.TargetStart);
+
+                // continue searching from after this match
+                start = editor.TargetEnd;
+                editor.TargetStart = start;
+                editor.TargetEnd = editor.TextLength;
+            }
+        }
+    
 
         private void SaveState()
         {
@@ -607,7 +946,8 @@ namespace MiniBoop
                 WindowTop = restore.Top,         // <- screen Y
                 WindowWasMaximized = this.WindowState == FormWindowState.Maximized,
                 FontSize = this.fontSize,
-                ZoomLevel = this.zoomLevel
+                ZoomLevel = this.zoomLevel,
+                ShowInvisibles = this.showInvisibles
             };
             if (Utils.Debug) Utils.DumpPrint(state);
             var path = GetStateFilePath();
@@ -641,6 +981,7 @@ namespace MiniBoop
             this.Height = state.WindowHeight;
             this.fontSize = state.FontSize > 0 ? state.FontSize : this.fontSize;
             this.zoomLevel = state.ZoomLevel;
+            this.showInvisibles = state.ShowInvisibles ?? false;
             if (state.WindowWasMaximized)
                 this.WindowState = FormWindowState.Maximized;
             else
