@@ -13,7 +13,7 @@ using System.Reflection;
 [assembly: System.Reflection.AssemblyCompanyAttribute("MiniBoop")]
 [assembly: System.Reflection.AssemblyConfigurationAttribute("Debug")]
 [assembly: System.Reflection.AssemblyFileVersionAttribute("1.0.0.0")]
-[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+684910497d42dfcd3e67a715cc8eb1de189fa42f")]
+[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+51c28d1ca9aab65a76d25f3cddd94e1a80485529")]
 [assembly: System.Reflection.AssemblyProductAttribute("MiniBoop")]
 [assembly: System.Reflection.AssemblyTitleAttribute("MiniBoop")]
 [assembly: System.Reflection.AssemblyVersionAttribute("1.0.0.0")]

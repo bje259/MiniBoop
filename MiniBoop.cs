@@ -31,7 +31,7 @@ namespace MiniBoop
     }
     public static class Utils
     {
-        public static bool Debug = false;
+        public static bool Debug = true;
         public static string Dump(object obj) =>
             obj == null ? "null" : JsonConvert.SerializeObject(obj, Formatting.Indented);
         public static string DumpPrint(object obj, string prefix = "")
@@ -458,6 +458,20 @@ namespace MiniBoop
                     MessageBox.Show("Invalid JSON", "Error");
                 }
             };
+            var runThingsItem = new ToolStripMenuItem("Run Encoded Scripts");
+            runThingsItem.Click += (s, e) =>
+            {
+                var isSelection = editor.SelectedText.Length > 0;
+                var text = isSelection ? editor.SelectedText : editor.Text;
+                var headerRE = new Regex(@"^(.*?)\r\n");
+                var match = headerRE.Match(text);
+                var tasks = match.Value.Split( [';'], StringSplitOptions.None);
+                Utils.DumpPrint(tasks, "Tasks:");
+                Utils.DumpPrint(transformMenu.DropDownItems.ToString(), "Menu items:");
+                //var foundDDLItem = transformMenu.DropDownItems.Find(tasks[0], false)[0];
+                //Utils.DumpPrint(foundDDLItem, "Found item:");
+                //foundDDLItem.PerformClick();
+            };
             var runPSSourceItem = new ToolStripMenuItem("Run PowerShell Script");
             runPSSourceItem.Click += (s, e) =>
             {
@@ -605,6 +619,8 @@ namespace MiniBoop
                 transformMenu.DropDownItems.Add(runPSSourceItem);
                 transformMenu.DropDownItems.Add(runPYSourceItem);
                 transformMenu.DropDownItems.Add(reloadItems);
+                transformMenu.DropDownItems.Add(new ToolStripSeparator());
+                transformMenu.DropDownItems.Add(runThingsItem);
             };
 
             reloadItems.Click += (s, e) =>
