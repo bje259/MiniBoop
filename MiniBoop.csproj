@@ -1,6 +1,6 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk.WindowsDesktop">
   <PropertyGroup>
-    <OutputType>WinExe</OutputType>
+    <OutputType>exe</OutputType>
     <TargetFramework>net481</TargetFramework> <!-- or net8.0-windows -->
     <LangVersion>12</LangVersion>
     <UseWindowsForms>true</UseWindowsForms>

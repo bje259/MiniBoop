@@ -22,5 +22,6 @@ function main(input) {
         input.postError(e.toString());
     }
 
-    input.text = script + "\n\n// Result:\n\n" + output;
+    // input.text = script + "\n\n// Result:\n\n" + output;
+    input.text = output;
 }

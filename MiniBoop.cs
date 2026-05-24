@@ -85,6 +85,7 @@ namespace MiniBoop
         private Button nextBtn;
         private Runspace sharedRunspace;
         private bool showInvisibles;
+        private Dictionary<string, EventHandler> ActionRegistry = new Dictionary<string, EventHandler>();
 
         public class BoopStyle
         {
@@ -429,6 +430,83 @@ namespace MiniBoop
 
 
         }
+        private string GetEditorText()
+        {
+                        var isSelection = editor.SelectedText.Length > 0;
+                        var text = isSelection ? editor.SelectedText : editor.Text;
+                        return text;
+        }
+
+        private void SetEditorText(string text)
+        {
+                        var isSelection = editor.SelectedText.Length > 0;
+                        if (isSelection)
+                        {
+                            editor.ReplaceSelection(text);
+                        }
+                        else
+                        {
+                            editor.Text = text;
+                        }
+        }
+
+        private void AppendEditorText(string text)
+        {
+                        var isSelection = editor.SelectedText.Length > 0;
+                        var originalText = GetEditorText();
+                        if (isSelection)
+                        {
+                            editor.ReplaceSelection(originalText + "\n" +text);
+                        }
+                        else
+                        {
+                            editor.Text = originalText + "\n" + text;
+                        }
+        }
+        private void PrependEditorText(string text)
+        {
+                        var isSelection = editor.SelectedText.Length > 0;
+                        var originalText = GetEditorText();
+                        if (isSelection)
+                        {
+                            editor.ReplaceSelection(text + "\n" + originalText);
+                        }
+                        else
+                        {
+                            editor.Text = text + "\n" + originalText;
+                        }
+        }
+
+        private void RunPsAndHandleErrors(PowerShell ps, bool append = false)
+        {
+            var results = ps.Invoke();
+            if (ps.HadErrors)
+            {
+                var errors = ps.Streams.Error.ReadAll();
+                var errorStrings = string.Join("\n", errors.Select(err => err.ToString()));
+                MessageBox.Show("PowerShell Script Error:\n" + errorStrings, "Error");
+                if (append)
+                {
+                    AppendEditorText("\n\n# Errors:\n" + errorStrings);
+                }
+                else
+                {
+                    PrependEditorText("\n\n# Errors:\n" + errorStrings);
+                }
+            }
+            else
+            {
+                string output = string.Join("\n", results.Select(r => r.ToString()));
+                if (append)
+                {
+                    AppendEditorText(output);
+                }
+                else
+                {
+                    SetEditorText(output);
+                }
+            }
+        }
 
         private void InitializeMenu()
         {
@@ -443,10 +521,11 @@ namespace MiniBoop
             // Transform Menu
             transformMenu = new ToolStripMenuItem("Transform");
             var uppercaseItem = new ToolStripMenuItem("Uppercase");
-            uppercaseItem.Click += (s, e) => editor.Text = editor.Text.ToUpper();
+            ActionRegistry["Uppercase"] = (s, e) => editor.Text = editor.Text.ToUpper();
+            uppercaseItem.Click += ActionRegistry["Uppercase"];
 
             var jsonPrettyItem = new ToolStripMenuItem("Pretty-print JSON");
-            jsonPrettyItem.Click += (s, e) =>
+            ActionRegistry["Pretty-print JSON"] = (s, e) =>
             {
                 try
                 {
@@ -458,57 +537,154 @@ namespace MiniBoop
                     MessageBox.Show("Invalid JSON", "Error");
                 }
             };
+            jsonPrettyItem.Click += ActionRegistry["Pretty-print JSON"];
             var runThingsItem = new ToolStripMenuItem("Run Encoded Scripts");
-            runThingsItem.Click += (s, e) =>
+            ActionRegistry["Run Encoded Scripts"] = (s, e) =>
             {
-                var isSelection = editor.SelectedText.Length > 0;
-                var text = isSelection ? editor.SelectedText : editor.Text;
+                var text = GetEditorText();
                 var headerRE = new Regex(@"^(.*?)\r\n");
                 var match = headerRE.Match(text);
+                SetEditorText(text.Substring(match.Length)); // remove header line
                 var tasks = match.Value.Split( [';'], StringSplitOptions.None);
+                var ActionListKeys = ActionRegistry.Keys.ToList();
                 Utils.DumpPrint(tasks, "Tasks:");
-                Utils.DumpPrint(transformMenu.DropDownItems.ToString(), "Menu items:");
-                //var foundDDLItem = transformMenu.DropDownItems.Find(tasks[0], false)[0];
-                //Utils.DumpPrint(foundDDLItem, "Found item:");
+                Utils.DumpPrint(ActionListKeys, "Action List keys:");
+                var ActionLog = new List<string[]>();
+                foreach (var task in tasks)
+                {
+                    var trimmedTask = task.Trim();
+                    var currentText = GetEditorText();
+                        Utils.DumpPrint(ActionLog, "Action log:");
+                    if (ActionRegistry.ContainsKey(trimmedTask))
+                    {
+                        Utils.DumpPrint(trimmedTask, "Running task:");
+                        ActionRegistry[trimmedTask].Invoke(null, null);
+                        ActionLog.Add(new string[] { trimmedTask, currentText,GetEditorText() });
+
+                    }
+                    else
+                    {
+                        Utils.DumpPrint(trimmedTask, "Task not found:");
+                    }
+                }
+                // Utils.DumpPrint(foundDDLItems, "Found items:");
                 //foundDDLItem.PerformClick();
+                PrependEditorText(match.Value);
+                AppendEditorText("\n\n// Action Log:\n" + string.Join("\n", ActionLog.Select(a => $"{a[0]} => {a[1].Substring(0, Math.Min(100, a[1].Length))} => {a[2].Substring(0, Math.Min(100, a[2].Length))}")) );
             };
+            runThingsItem.Click += ActionRegistry["Run Encoded Scripts"];
             var runPSSourceItem = new ToolStripMenuItem("Run PowerShell Script");
-            runPSSourceItem.Click += (s, e) =>
+            ActionRegistry["Run PowerShell Script"] = (s, e) =>
             {
                 try
                 {
                     using (PowerShell ps = PowerShell.Create())
                     {
-                        var isSelection = editor.SelectedText.Length > 0;
-                        var text = isSelection ? editor.SelectedText : editor.Text;
+                        var text = GetEditorText();
                         ps.Runspace = sharedRunspace;
                         ps.AddScript(text);
-                        var results = ps.Invoke();
-                        if (ps.HadErrors)
+                        RunPsAndHandleErrors(ps,false);
+                    }
+                }
+                catch (Exception ex)
+                {
+                    MessageBox.Show("Script failed: " + ex.Message, "Error");
+                }
+            };
+            runPSSourceItem.Click += ActionRegistry["Run PowerShell Script"];
+            var runSecureDownload = new ToolStripMenuItem("Run Secure Download Script");
+            ActionRegistry["Run Secure Download Script"] = (s, e) =>
+            {
+                try
+                {
+                    using (PowerShell ps = PowerShell.Create())
+                    {
+                        var text = GetEditorText();
+                        if (!text.Contains("[Download]"))
                         {
-                            var errors = ps.Streams.Error.ReadAll();
-                            var errorStrings = string.Join("\n", errors.Select(err => err.ToString()));
-                            MessageBox.Show("PowerShell Script Error:\n" + errorStrings, "Error");
-                            if (isSelection)
-                            {
-                                editor.ReplaceSelection(text+"\n\n# Errors:\n"+errorStrings);
-                            }
-                            else
-                            {
-                                editor.Text = text+"\n\n# Errors:\n"+errorStrings;
-                            }
+                            SetEditorText(
+                                """
+                                [Download]
+                                URL=https://example.com/file.zip
+                                SHA256=...
+                                OUT=C:\path\to\file.zip
+                                """
+                            );
                         }
                         else
                         {
-                            string output = string.Join("\n", results.Select(r => r.ToString()));
-                            if (isSelection)
-                            {
-                                editor.ReplaceSelection(output);
-                            }
-                            else
-                            {
-                                editor.Text = output;
-                            }
+                            ps.Runspace = sharedRunspace;
+                            ps.AddScript(
+                                """
+                                function Get-SHA256 {
+                                    param([string]$Path)
+
+                                    $sha256 = [System.Security.Cryptography.SHA256]::Create()
+                                    $stream = [System.IO.File]::OpenRead($Path)
+
+                                    try {
+                                        $hashBytes = $sha256.ComputeHash($stream)
+                                    }
+                                    finally {
+                                        $stream.Dispose()
+                                        $sha256.Dispose()
+                                    }
+
+                                    -join ($hashBytes | ForEach-Object { $_.ToString("x2") })
+                                }
+                                function Invoke-SecureDownload {
+                                    $lines = $args[0] -split "`r?`n"
+                                    $params = @{}
+                                    foreach ($line in $lines) {
+                                        if ($line -match "^(.*?)=(.*)$") {
+                                            $params[$matches[1].Trim()] = $matches[2].Trim()
+                                        }
+                                    }
+                                    if (-not $params.ContainsKey("URL") -or -not $params.ContainsKey("SHA256") -or -not $params.ContainsKey("OUT")) {
+                                        throw "Missing required parameters. Format should be:
+                                        [Download]
+                                        URL=<url>
+                                        SHA256=<sha256>
+                                        OUT=<output path>"
+                                    }
+                                    $url = $params["URL"]
+                                    $expectedHash = $params["SHA256"]
+                                    $expectedHash = ($expectedHash -replace '^sha256:', '').ToLower()
+                                    $outputPath = $params["OUT"]
+                                    #$tempFile = [System.IO.Path]::GetTempFileName()
+                                    $fileName = [System.IO.Path]::GetFileName($url)
+                                    # fallback if URL doesn’t end cleanly
+                                    if (-not $fileName -or $fileName -eq "") {
+                                        $fileName = "downloaded_file"
+                                        $tempFile = Join-Path ([System.IO.Path]::GetTempPath()) "$fileName-$([guid]::NewGuid())"
+                                    }
+                                    else {
+                                        $baseName = [System.IO.Path]::GetFileNameWithoutExtension($fileName)
+                                        $ext = [System.IO.Path]::GetExtension($fileName)
+                                        $tempFile = Join-Path ([System.IO.Path]::GetTempPath()) "$baseName-$([guid]::NewGuid())$ext"
+                                    }
+                                    try {
+                                        Invoke-WebRequest -Uri $url -OutFile $tempFile
+
+                                        $actualHash = (Get-SHA256 -Path $tempFile)
+                                        $actualHash = $actualHash.ToLower()
+                                        if ($actualHash -ne $expectedHash) {
+                                            throw "Hash mismatch! Expected: $expectedHash, Actual: $actualHash"
+                                        }
+                                        Move-Item -Path $tempFile -Destination $outputPath -Force
+                                        Write-Output "Download successful and verified: $outputPath"
+                                    }
+                                    finally {
+                                        if (Test-Path $tempFile) {
+                                            Remove-Item $tempFile -Force
+                                        }
+                                    }
+                                }
+                                Invoke-SecureDownload @args;
+                                """
+                            );
+                            ps.AddArgument(text);
+                            RunPsAndHandleErrors(ps,true);
                         }
                     }
                 }
@@ -517,15 +693,17 @@ namespace MiniBoop
                     MessageBox.Show("Script failed: " + ex.Message, "Error");
                 }
             };
+            runSecureDownload.Click += ActionRegistry["Run Secure Download Script"];
             var runPYSourceItem = new ToolStripMenuItem("Run Python Script");
-            runPYSourceItem.Click += (s, e) =>
+            ActionRegistry["Run Python Script"] = (s, e) =>
             {
                 try
                 {
                     using (PowerShell ps = PowerShell.Create())
                     {
-                        var isSelection = editor.SelectedText.Length > 0;
-                        var text = isSelection ? editor.SelectedText : editor.Text;
+                        // var isSelection = editor.SelectedText.Length > 0;
+                        // var text = isSelection ? editor.SelectedText : editor.Text;
+                        var text = GetEditorText();
                         ps.Runspace = sharedRunspace;
                         string InvokePythonFunc = """
                         function New-TempFileWithExtension([string]$ext) {
@@ -550,33 +728,34 @@ namespace MiniBoop
                         Invoke-Python $pysrc;
                         """;
                         ps.AddScript(InvokePythonFunc);
-                        var results = ps.Invoke();
-                        if (ps.HadErrors)
-                        {
-                            var errors = ps.Streams.Error.ReadAll();
-                            var errorStrings = string.Join("\n", errors.Select(err => err.ToString()));
-                            MessageBox.Show("Python Script Error:\n" + errorStrings, "Error");
-                            if (isSelection)
-                            {
-                                editor.ReplaceSelection(text+"\n\n# Errors:\n"+errorStrings);
-                            }
-                            else
-                            {
-                                editor.Text = text+"\n\n# Errors:\n"+errorStrings;
-                            }
-                        }
-                        else
-                        {
-                            string output = string.Join("\n", results.Select(r => r.ToString()));
-                            if (isSelection)
-                            {
-                                editor.ReplaceSelection(output);
-                            }
-                            else
-                            {
-                                editor.Text = output;
-                            }
-                        }
+                        RunPsAndHandleErrors(ps,true);
+                        // var results = ps.Invoke();
+                        // if (ps.HadErrors)
+                        // {
+                        //     var errors = ps.Streams.Error.ReadAll();
+                        //     var errorStrings = string.Join("\n", errors.Select(err => err.ToString()));
+                        //     MessageBox.Show("Python Script Error:\n" + errorStrings, "Error");
+                        //     if (isSelection)
+                        //     {
+                        //         editor.ReplaceSelection(text+"\n\n# Errors:\n"+errorStrings);
+                        //     }
+                        //     else
+                        //     {
+                        //         editor.Text = text+"\n\n# Errors:\n"+errorStrings;
+                        //     }
+                        // }
+                        // else
+                        // {
+                        //     string output = string.Join("\n", results.Select(r => r.ToString()));
+                        //     if (isSelection)
+                        //     {
+                        //         editor.ReplaceSelection(output);
+                        //     }
+                        //     else
+                        //     {
+                        //         editor.Text = output;
+                        //     }
+                        // }
                     }
                 }
                 catch (Exception ex)
@@ -584,6 +763,7 @@ namespace MiniBoop
                     MessageBox.Show("Script failed: " + ex.Message, "Error");
                 }
             };
+            runPYSourceItem.Click += ActionRegistry["Run Python Script"];
             var reloadItems = new ToolStripMenuItem("Reload");
             Action loadTransformMenuItems = () =>
             {
@@ -595,7 +775,8 @@ namespace MiniBoop
 
                     var item = new ToolStripMenuItem(script.Name);
                     item.ToolTipText = script.Description;
-                    item.Click += (s, e) =>
+                    
+                    ActionRegistry[script.Name] = (s, e) =>
                     {
                         try
                         {
@@ -610,6 +791,7 @@ namespace MiniBoop
                             MessageBox.Show("Script failed: " + ex.Message, "Error");
                         }
                     };
+                    item.Click += ActionRegistry[script.Name];
 
                         transformMenu.DropDownItems.Add(item);
                 }
@@ -618,6 +800,7 @@ namespace MiniBoop
                 transformMenu.DropDownItems.Add(jsonPrettyItem);
                 transformMenu.DropDownItems.Add(runPSSourceItem);
                 transformMenu.DropDownItems.Add(runPYSourceItem);
+                transformMenu.DropDownItems.Add(runSecureDownload);
                 transformMenu.DropDownItems.Add(reloadItems);
                 transformMenu.DropDownItems.Add(new ToolStripSeparator());
                 transformMenu.DropDownItems.Add(runThingsItem);

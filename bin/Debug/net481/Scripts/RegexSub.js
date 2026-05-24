@@ -398,6 +398,7 @@ function loadBuiltinDefinitions(defs) {
         "lalphnum": "[a-z0-9]",
         "anychar" : "[\s\S]",
         "lineEnding" : "(?:\r?\n)",
+        "le": "(?:\r?\n)",
         "devtoolCpCleanup" : "s/\n\:\s*\n/:/g",
     }`).replace(/\\/g,String.raw`\\`);
     try {
@@ -684,7 +685,7 @@ function main(state) {
                 if (fmt) {
                     headers.push(`m${mode}${invert}/${pat}/${fmt}/${flags}`);
                 } else {                    
-                    headers.push(`${mode}${invert}/${pat}/${flags}`);
+                    headers.push(`m${mode}${invert}/${pat}/${flags}`);
                 }
                 fmt = expand(fmt || "", definitions);
                 // const addFmt = (fn,re) => {
